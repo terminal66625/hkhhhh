@@ -17,16 +17,12 @@ canvas{position:fixed;inset:0;z-index:0;}
 .card p{font-size:18px;line-height:2;min-height:2em;white-space:pre-wrap;}
 .cursor{display:inline-block;width:2px;height:1em;background:#ff8fa3;margin-left:2px;vertical-align:-2px;animation:blink .7s steps(1) infinite;}
 @keyframes blink{50%{opacity:0;}}
-.back{position:relative;z-index:5;margin-top:22px;padding:10px 26px;border:none;border-radius:24px;
-  cursor:pointer;font-size:14px;font-weight:bold;color:#fff;background:linear-gradient(135deg,#ff6b81,#ff8fa3);
-  box-shadow:0 4px 16px rgba(255,107,129,.5);}
 </style>
 </head>
 <body>
 <canvas id="cv"></canvas>
 <div class="heart-big">♥</div>
 <div class="card"><p id="type"></p><span class="cursor" id="cursor"></span></div>
-<button class="back" onclick="location.href='py_heart.html'">回到表白页</button>
 
 <script>
 var text = "嗨，看到这里说明你心里已经有我了～\n\n遇见你之后，我才发现：\n“多喝热水”是真的想对你好，\n“早点睡哦”是真的舍不得你熬夜，\n满屏的爱心，都是我憋了很久的话。\n\n所以，最后再认真问一次——\n你，愿意做我的女朋友吗？ ♥";
