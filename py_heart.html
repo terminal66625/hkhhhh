@@ -164,7 +164,7 @@ const TEXTS = [
 ];
 const sw = window.innerWidth;
 const sh = window.innerHeight;
-let tipBox = null, tipTimer = null, refuseCount = 0, dodgeCount = 0;
+let tipBox = null, tipTimer = null, refuseCount = 0, dodgeCount = 0, noMoved = false;
 const REFUSE_TIPS = [
   "想清楚再选！再给你一次机会～",
   "真的不再考虑一下吗？我可认真啦～",
@@ -294,14 +294,56 @@ function refuse() {
   hideWatermark();
   escalateRefuse();
 }
-// 不愿意按钮：鼠标靠近就“逃跑”
-document.querySelector('#confess .btn-no').addEventListener('mouseenter', function(){
+// 不愿意按钮：鼠标靠近就“逃走”（每次只逃一点，限制在弹窗附近与视野内，且不能离鼠标太近）
+document.querySelector('#confess .btn-no').addEventListener('mouseenter', function(e){
   if (dodgeCount >= 8) return;
   dodgeCount++;
   const noBtn = this;
+  const modal = document.getElementById('confess');
+  const mr = modal.getBoundingClientRect();
+  const margin = 130; // 允许活动的范围：弹窗四周各扩展 130px
+  const minX = mr.left - margin, maxX = mr.right + margin;
+  const minY = mr.top - margin, maxY = mr.bottom + margin;
+
+  // 当前中心点
+  const cur = noBtn.getBoundingClientRect();
+  const cx = cur.left + cur.width / 2;
+  const cy = cur.top + cur.height / 2;
+  if (!noMoved) noMoved = true;
+
+  // 鼠标位置
+  const mx = e.clientX, my = e.clientY;
+
+  // 逃离方向：远离鼠标，带一点随机抖动
+  const dx = cx - mx, dy = cy - my;
+  const dist = Math.hypot(dx, dy) || 1;
+  let dirX = dx / dist, dirY = dy / dist;
+  if (dist < 1) { dirX = (Math.random() - 0.5); dirY = (Math.random() - 0.5); }
+
+  // 每次只逃一点：40 ~ 90px
+  const step = 40 + Math.random() * 50;
+  let nx = cx + dirX * step + (Math.random() - 0.5) * 16;
+  let ny = cy + dirY * step + (Math.random() - 0.5) * 16;
+
+  // 限制在视野内
+  nx = Math.max(20, Math.min(window.innerWidth - 20, nx));
+  ny = Math.max(20, Math.min(window.innerHeight - 20, ny));
+  // 限制在弹窗附近
+  nx = Math.max(minX, Math.min(maxX, nx));
+  ny = Math.max(minY, Math.min(maxY, ny));
+  // 不能离鼠标太近（至少 70px），否则再往外推一点
+  const minDist = 70;
+  if (Math.hypot(nx - mx, ny - my) < minDist) {
+    const a = Math.atan2(ny - my, nx - mx);
+    nx = mx + Math.cos(a) * minDist;
+    ny = my + Math.sin(a) * minDist;
+    nx = Math.max(minX, Math.min(maxX, nx));
+    ny = Math.max(minY, Math.min(maxY, ny));
+  }
+
   noBtn.style.position = 'fixed';
-  noBtn.style.left = Math.floor(Math.random()*(sw-120)) + 'px';
-  noBtn.style.top = Math.floor(Math.random()*(sh-50)) + 'px';
+  noBtn.style.left = (nx - noBtn.offsetWidth / 2) + 'px';
+  noBtn.style.top = (ny - noBtn.offsetHeight / 2) + 'px';
   noBtn.style.zIndex = '998';
   escalateRefuse();
 });
@@ -421,8 +463,9 @@ function spawnHearts() {
 }
 spawnHearts();
 
-// 视频播放结束后显示彩蛋弹窗
+// 视频播放结束后：视频自动消失，开始后面的彩蛋环节
 document.getElementById('videoPlayer').addEventListener('ended', function(){
+  this.style.display = 'none';
   burstConfetti();
   document.getElementById('bonusModal').style.display = 'block';
 });
