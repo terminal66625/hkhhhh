@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>爱心表白主页</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;
+  background:linear-gradient(135deg,#fff5f7,#ffe9ee,#fde2e4,#fff5f7);
+  background-size:300% 300%;animation:bgShift 12s ease infinite;
+  font-family:"微软雅黑",sans-serif;overflow:hidden;cursor:pointer;}
+@keyframes bgShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.title{font-size:34px;color:#ff6b81;font-weight:bold;margin-bottom:36px;letter-spacing:2px;
+  text-shadow:0 2px 10px rgba(255,107,129,.35);animation:breathe 3s ease-in-out infinite;}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.85;}50%{transform:scale(1.06);opacity:1;}}
+.btn{position:relative;padding:16px 40px;font-size:20px;border:none;color:#fff;border-radius:30px;cursor:pointer;
+  background:linear-gradient(135deg,#ff6b81,#ff8fa3);box-shadow:0 6px 20px rgba(255,107,129,.5);
+  transition:transform .2s,box-shadow .2s;}
+.btn:hover{transform:scale(1.1);box-shadow:0 10px 32px rgba(255,107,129,.7);}
+.btn:active{transform:scale(.98);}
+.float-heart{position:fixed;bottom:-40px;color:rgba(255,107,129,.35);font-size:20px;
+  pointer-events:none;user-select:none;z-index:0;animation:floatUp linear infinite;}
+@keyframes floatUp{0%{transform:translateY(0) rotate(0) scale(.6);opacity:0;}10%{opacity:1;}
+  100%{transform:translateY(-110vh) rotate(360deg) scale(1.2);opacity:0;}}
+.click-heart{position:fixed;pointer-events:none;z-index:50;color:#ff6b81;font-size:22px;
+  animation:clickRise 1s ease-out forwards;}
+@keyframes clickRise{0%{transform:translate(-50%,-50%) scale(.6);opacity:1;}
+  100%{transform:translate(-50%,-160%) scale(1.6);opacity:0;}}
+</style>
+</head>
+<body>
+<div class="title">只想对你说 ♥</div>
+<button class="btn" onclick="window.location.href='py_heart.html'">点这里开启爱心</button>
+<script>
+(function(){
+  var symbols=['♥','♡','♥'];
+  for(var i=0;i<12;i++){
+    var h=document.createElement('span');
+    h.className='float-heart';
+    h.innerText=symbols[i%symbols.length];
+    h.style.left=(Math.random()*100)+'vw';
+    h.style.fontSize=(14+Math.random()*24)+'px';
+    h.style.animationDuration=(8+Math.random()*10)+'s';
+    h.style.animationDelay=(Math.random()*10)+'s';
+    document.body.appendChild(h);
+  }
+  document.body.addEventListener('click',function(e){
+    var c=document.createElement('span');
+    c.className='click-heart';
+    c.textContent='♥';
+    c.style.left=e.clientX+'px';
+    c.style.top=e.clientY+'px';
+    c.style.fontSize=(18+Math.random()*20)+'px';
+    document.body.appendChild(c);
+    setTimeout(function(){c.remove();},1000);
+  });
+})();
+</script>
+</body>
+</html>

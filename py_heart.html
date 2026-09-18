@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>爱心表白</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{width:100vw;height:100vh;overflow:hidden;
+  background:linear-gradient(135deg,#fff5f7,#ffe9ee,#fde2e4,#fff5f7);
+  background-size:300% 300%;animation:bgShift 12s ease infinite;
+  font-family:"微软雅黑",sans-serif;position:relative;}
+@keyframes bgShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+/* 水印样式 */
+.watermark{
+    position: fixed;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #999;
+    font-size: 14px;
+    opacity: 0.4;
+    z-index: 10;
+    pointer-events: none;
+    user-select: none;
+}
+/* 漂浮爱心背景 */
+.float-heart{position:fixed;bottom:-40px;color:rgba(255,107,129,.32);font-size:20px;
+  pointer-events:none;user-select:none;z-index:0;animation:floatUp linear infinite;}
+@keyframes floatUp{
+  0%{transform:translateY(0) rotate(0deg) scale(.6);opacity:0;}
+  10%{opacity:1;}
+  100%{transform:translateY(-110vh) rotate(360deg) scale(1.2);opacity:0;}
+}
+/* 弹窗/文字气泡 */
+.pop{
+  position:absolute;
+  transform:translate(-50%,-50%) rotate(var(--rot,0deg));
+  border-radius:6px;
+  box-shadow:0 4px 16px rgba(0,0,0,.18);
+  padding:6px 12px;font-size:13px;font-weight:bold;white-space:nowrap;
+  animation:popIn .45s cubic-bezier(.2,1.6,.4,1) both, bob var(--bob-dur,3s) ease-in-out infinite;
+}
+.pop.dot{padding:0;border-radius:50%;}
+.pop.bye{animation:popOut .3s ease both !important;}
+@keyframes popIn{
+  from{transform:translate(-50%,-50%) scale(0) rotate(var(--rot,0deg));opacity:0;}
+  to{transform:translate(-50%,-50%) scale(1) rotate(var(--rot,0deg));opacity:1;}
+}
+@keyframes bob{0%,100%{margin-top:0;}50%{margin-top:-10px;}}
+@keyframes popOut{to{transform:translate(-50%,-50%) scale(0) rotate(var(--rot,0deg));opacity:0;}}
+/* 弹窗 */
+.modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:340px;padding:28px 20px;
+  background:rgba(255,255,255,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-radius:18px;border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 12px 40px rgba(255,107,129,.25);text-align:center;z-index:999;
+  animation:modalIn .5s cubic-bezier(.2,1.4,.4,1) both;}
+@keyframes modalIn{from{transform:translate(-50%,-50%) scale(.7);opacity:0;}to{transform:translate(-50%,-50%) scale(1);opacity:1;}}
+.modal.shake{animation:shake .5s;}
+@keyframes shake{0%,100%{transform:translate(-50%,-50%) translateX(0);}
+  20%{transform:translate(-50%,-50%) translateX(-8px);}40%{transform:translate(-50%,-50%) translateX(8px);}
+  60%{transform:translate(-50%,-50%) translateX(-5px);}80%{transform:translate(-50%,-50%) translateX(5px);}}
+.modal h3{font-size:17px;font-weight:normal;margin-bottom:22px;line-height:1.6;}
+.btn-group button{min-width:80px;max-width:90%;padding:10px 18px;margin:6px 8px;border:none;border-radius:24px;
+  cursor:pointer;font-size:14px;font-weight:bold;white-space:normal;
+  transition:transform .2s,box-shadow .2s,background .2s;}
+.btn-yes{background:linear-gradient(135deg,#ff6b81,#ff8fa3);color:#fff;box-shadow:0 4px 16px rgba(255,107,129,.45);}
+.btn-yes:hover{transform:scale(1.08);box-shadow:0 6px 22px rgba(255,107,129,.6);}
+.btn-no{background:#f0f0f0;color:#666;}
+.btn-no:hover{background:#e4e4e4;color:#333;}
+/* 提示条 */
+.tip{position:fixed;top:calc(50% - 90px);left:50%;transform:translateX(-50%);
+  padding:14px 22px;background:linear-gradient(135deg,#FFE4E1,#fff0ee);color:#8B0000;border-radius:24px;
+  font-size:15px;font-weight:bold;z-index:1000;box-shadow:0 6px 20px rgba(139,0,0,.2);
+  animation:tipIn .4s ease both;white-space:nowrap;}
+@keyframes tipIn{from{transform:translateX(-50%) translateY(-10px);opacity:0;}to{transform:translateX(-50%) translateY(0);opacity:1;}}
+/* 视频播放器样式 */
+#videoPlayer{
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90vw;
+    max-height: 90vh;
+    z-index: 1001;
+    display: none;
+    border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(0,0,0,.35);
+}
+/* 彩带 */
+.confetti{position:fixed;top:50%;left:50%;width:10px;height:14px;border-radius:2px;z-index:1002;
+  pointer-events:none;animation:confFall ease-out forwards;}
+@keyframes confFall{
+  0%{transform:translate(-50%,-50%) translate(0,0) rotate(0);opacity:1;}
+  100%{transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) rotate(720deg);opacity:0;}
+}
+</style>
+</head>
+<body>
+<!-- 顶部水印 -->
+<div id="watermark" class="watermark">洪康华的网站，勿盗</div>
+
+<div class="modal" id="confess">
+  <h3>你愿意做我的女朋友吗？</h3>
+  <div class="btn-group">
+    <button class="btn-yes" onclick="agree()">愿意</button>
+    <button class="btn-no" onclick="refuse()">不愿意</button>
+  </div>
+</div>
+
+<!-- 第二轮选择弹窗 -->
+<div class="modal" id="secondModal" style="display: none;">
+  <h3>你看完了，我还有更好康的你康不康？</h3>
+  <div class="btn-group">
+    <button class="btn-no" onclick="option1()">行行行，我不打扰了，我走了哈</button>
+    <button class="btn-yes" onclick="option2()">我要康康这到底是怎么个事</button>
+  </div>
+</div>
+
+<!-- 第三轮选择弹窗 -->
+<div class="modal" id="thirdModal" style="display: none;">
+  <h3>你怎么还不走？</h3>
+  <div class="btn-group">
+    <button class="btn-no" onclick="optionA()">行，我真走了</button>
+    <button class="btn-yes" onclick="optionB()">行，我不走了，我要康康这是怎么个事</button>
+  </div>
+</div>
+
+<!-- 彩蛋弹窗（视频结束后出现） -->
+<div class="modal" id="bonusModal" style="display: none;">
+  <h3>还没结束哦，这里还有彩蛋～</h3>
+  <div class="btn-group">
+    <button class="btn-yes" onclick="location.href='game.html'">玩个小游戏</button>
+    <button class="btn-yes" onclick="location.href='surprise.html'">领取终极惊喜</button>
+  </div>
+</div>
+
+<!-- 视频播放元素 -->
+<video id="videoPlayer" controls>
+  <source src="video.mp4" type="video/mp4">
+  您的浏览器不支持HTML5视频播放，请更换浏览器尝试。
+</video>
+
+<script>
+const COLORS = [
+  ["#FFB6C1", "#8B0000"],
+  ["#ADD8E6", "#003366"],
+  ["#FFFACD", "#8B7500"],
+  ["#98FB98", "#006400"],
+  ["#FFDAB9", "#CD6600"],
+  ["#E6E6FA", "#483D8B"],
+  ["#FFC0CB", "#C71585"],
+  ["#B0E0E6", "#00688B"]
+];
+const TEXTS = [
+  "多喝热水", "好好吃饭", "保持好心情", "照顾好自己",
+  "我想你了", "别熬夜", "天凉了多穿衣服", "顺顺利利",
+  "天天开心", "好好爱自己", "是你就好", "一切都好",
+  "记得想我", "少点烦恼", "平安喜乐", "万事胜意",
+  "多吃亿点", "别再卷了", "你是我的神", "代码不报错",
+  "今天也很爱你", "少喝奶茶（骗你的）", "梦里见", "你最好看",
+  "冲冲冲", "稳住别浪", "摸鱼快乐", "工资翻倍",
+  "早点睡哦", "盖好被子", "你笑起来真好看", "遇见你真好"
+];
+const sw = window.innerWidth;
+const sh = window.innerHeight;
+let tipBox = null, tipTimer = null, refuseCount = 0, dodgeCount = 0;
+const REFUSE_TIPS = [
+  "想清楚再选！再给你一次机会～",
+  "真的不再考虑一下吗？我可认真啦～",
+  "你手滑了吧？没事，我当没看见～",
+  "拒绝这么多次，我的小心脏受不住了～",
+  "这个按钮会跑哦，别追啦～",
+  "哎呀你抓不到我的～",
+  "再追我就要喊非礼啦～",
+  "服了你了，给你个台阶下吧～"
+];
+
+// 音效（Web Audio 合成，无需外部文件）
+let audioCtx = null;
+function beep(freq, dur, type, vol) {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type || 'sine';
+    o.frequency.value = freq;
+    g.gain.value = vol || 0.18;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+    o.stop(audioCtx.currentTime + dur);
+  } catch(e) {}
+}
+function playYes() { beep(523, 0.15); setTimeout(()=>beep(659,0.15),120); setTimeout(()=>beep(784,0.35),240); }
+function playNo() { beep(220, 0.18, 'square', 0.06); }
+
+// 彩带爆发
+function burstConfetti() {
+  const colors = ['#ff6b81','#ffb6c1','#ffd700','#7fffd4','#a8e6cf','#ff8fa3','#ffdab9','#add8e6'];
+  for (let i = 0; i < 90; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.setProperty('--dx', (Math.random()*600 - 300) + 'px');
+    c.style.setProperty('--dy', (Math.random()*600 - 300) + 'px');
+    c.style.animationDuration = (1.2 + Math.random()*1.5) + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 2800);
+  }
+}
+
+// 隐藏水印
+function hideWatermark() {
+  const watermark = document.getElementById('watermark');
+  if (watermark) watermark.style.display = 'none';
+}
+
+// 爱心坐标公式（返回圆心坐标，配合 translate(-50%,-50%) 居中）
+function heartPos(t) {
+  const x = 16 * Math.pow(Math.sin(t), 3);
+  const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+  return [
+    Math.floor(sw/2 + x*22),
+    Math.floor(sh/2 - y*22)
+  ];
+}
+// 随机颜色
+function randomColor() {
+  return COLORS[Math.floor(Math.random()*COLORS.length)];
+}
+// 创建小窗口：无文字时为圆点（爱心轮廓），有文字时为带旋转/漂浮的气泡
+function makePop(x, y, text, bg, fg) {
+  const div = document.createElement('div');
+  div.className = 'pop';
+  div.style.left = x + 'px';
+  div.style.top = y + 'px';
+  div.style.background = bg;
+  div.style.color = fg;
+  div.style.setProperty('--rot', (Math.random()*30 - 15) + 'deg');
+  div.style.setProperty('--bob-dur', (1.8 + Math.random()*2) + 's');
+  if (text) {
+    div.innerText = text;
+    div.style.fontSize = (12 + Math.floor(Math.random()*6)) + 'px';
+    div.style.padding = (4 + Math.floor(Math.random()*6)) + 'px ' + (8 + Math.floor(Math.random()*8)) + 'px';
+    div.style.borderRadius = (6 + Math.floor(Math.random()*10)) + 'px';
+  } else {
+    div.classList.add('dot');
+    const s = (10 + Math.floor(Math.random()*10)) + 'px';
+    div.style.width = s;
+    div.style.height = s;
+    div.style.boxShadow = '0 0 12px ' + bg + ', 0 0 24px ' + bg;
+  }
+  document.body.appendChild(div);
+  return div;
+}
+// 渐隐移除
+function fadeRemove(el) {
+  el.classList.add('bye');
+  setTimeout(() => el.remove(), 300);
+}
+// 提示条
+function showTip(msg) {
+  if (!tipBox) {
+    tipBox = document.createElement('div');
+    tipBox.className = 'tip';
+    document.body.appendChild(tipBox);
+  }
+  tipBox.innerText = msg;
+  tipBox.style.animation = 'none';
+  void tipBox.offsetWidth;
+  tipBox.style.animation = 'tipIn .4s ease both';
+  clearTimeout(tipTimer);
+  tipTimer = setTimeout(() => {
+    if (tipBox) { tipBox.remove(); tipBox = null; }
+  }, 2200);
+}
+// 拒绝升级：愿意变大、不愿意缩小 + 弹窗抖动 + 提示
+function escalateRefuse() {
+  refuseCount++;
+  const yesBtn = document.querySelector('#confess .btn-yes');
+  const noBtn = document.querySelector('#confess .btn-no');
+  if (yesBtn) yesBtn.style.transform = 'scale(' + (1 + Math.min(refuseCount,6)*0.15) + ')';
+  if (noBtn) noBtn.style.transform = 'scale(' + Math.max(0.4, 1 - refuseCount*0.1) + ')';
+  const modal = document.getElementById('confess');
+  modal.classList.remove('shake');
+  void modal.offsetWidth;
+  modal.classList.add('shake');
+  showTip(REFUSE_TIPS[Math.min(refuseCount-1, REFUSE_TIPS.length-1)]);
+  playNo();
+}
+// 不愿意按钮：点击触发升级
+function refuse() {
+  hideWatermark();
+  escalateRefuse();
+}
+// 不愿意按钮：鼠标靠近就“逃跑”
+document.querySelector('#confess .btn-no').addEventListener('mouseenter', function(){
+  if (dodgeCount >= 8) return;
+  dodgeCount++;
+  const noBtn = this;
+  noBtn.style.position = 'fixed';
+  noBtn.style.left = Math.floor(Math.random()*(sw-120)) + 'px';
+  noBtn.style.top = Math.floor(Math.random()*(sh-50)) + 'px';
+  noBtn.style.zIndex = '998';
+  escalateRefuse();
+});
+// 愿意按钮：开始动画 + 音效 + 彩带
+function agree() {
+  hideWatermark();
+  playYes();
+  burstConfetti();
+  document.getElementById('confess').style.display = 'none';
+  if (tipBox) { tipBox.remove(); tipBox = null; }
+  startAnimation();
+}
+// 完整动画流程
+async function startAnimation() {
+  const heartList = [];
+  const N = 120;
+  // 1. 画爱心轮廓
+  for (let i = 0; i < N; i++) {
+    const t = i * (2 * Math.PI / N);
+    const [x, y] = heartPos(t);
+    const [bg, fg] = randomColor();
+    heartList.push(makePop(x, y, '', bg, fg));
+    await sleep(20);
+  }
+  // 2. 倒序渐隐删除爱心
+  for (let i = heartList.length - 1; i >= 0; i--) {
+    fadeRemove(heartList[i]);
+    await sleep(10);
+  }
+  // 3. 满屏随机文字
+  const target = Math.max(60, Math.min(300, Math.floor(sw/120) * Math.floor(sh/40)));
+  const textList = [];
+  for (let i = 0; i < target; i++) {
+    const x = Math.floor(Math.random() * (sw - 140));
+    const y = Math.floor(Math.random() * (sh - 50));
+    const [bg, fg] = randomColor();
+    const text = TEXTS[Math.floor(Math.random()*TEXTS.length)];
+    textList.push(makePop(x, y, text, bg, fg));
+    await sleep(10);
+  }
+  // 4. 停留5秒
+  await sleep(5000);
+  // 5. 随机逐个渐隐消失
+  textList.sort(() => Math.random() - 0.5);
+  for (const w of textList) {
+    fadeRemove(w);
+    await sleep(20);
+  }
+  // 弹幕全部消失后，显示第二轮选择
+  showSecondModal();
+}
+
+// 显示第二轮选择弹窗
+function showSecondModal() {
+  document.getElementById('secondModal').style.display = 'block';
+}
+
+// 第二轮选项1：选择离开，弹出第三轮
+function option1() {
+  document.getElementById('secondModal').style.display = 'none';
+  document.getElementById('thirdModal').style.display = 'block';
+}
+
+// 第二轮选项2：直接播放视频
+function option2() {
+  document.getElementById('secondModal').style.display = 'none';
+  playVideo();
+}
+
+// 第三轮选项A：确认离开
+function optionA() {
+  document.getElementById('thirdModal').style.display = 'none';
+  // 尝试关闭窗口，浏览器限制时弹出告别提示
+  try {
+    window.close();
+    setTimeout(() => {
+      alert('那下次再见啦～');
+    }, 500);
+  } catch(e) {
+    alert('那下次再见啦～');
+  }
+}
+
+// 第三轮选项B：留下看视频
+function optionB() {
+  document.getElementById('thirdModal').style.display = 'none';
+  playVideo();
+}
+
+// 播放视频函数
+function playVideo() {
+  const video = document.getElementById('videoPlayer');
+  video.style.display = 'block';
+  // 尝试自动播放，被浏览器阻止时需用户手动点击播放
+  video.play().catch(err => {
+    console.log('自动播放被浏览器限制，请手动点击播放按钮');
+  });
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// 漂浮爱心背景
+function spawnHearts() {
+  const symbols = ['♥', '♡', '♥'];
+  for (let i = 0; i < 10; i++) {
+    const h = document.createElement('span');
+    h.className = 'float-heart';
+    h.innerText = symbols[i % symbols.length];
+    h.style.left = (Math.random()*100) + 'vw';
+    h.style.fontSize = (14 + Math.random()*22) + 'px';
+    h.style.animationDuration = (8 + Math.random()*10) + 's';
+    h.style.animationDelay = (Math.random()*10) + 's';
+    document.body.appendChild(h);
+  }
+}
+spawnHearts();
+
+// 视频播放结束后显示彩蛋弹窗
+document.getElementById('videoPlayer').addEventListener('ended', function(){
+  burstConfetti();
+  document.getElementById('bonusModal').style.display = 'block';
+});
+
+// 禁止关闭页面提示
+window.onbeforeunload = function(e) {
+  e.returnValue = '想清楚再关哦～';
+};
+</script>
+</body>
+</html>
