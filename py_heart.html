@@ -74,19 +74,6 @@ body{width:100vw;height:100vh;overflow:hidden;
   font-size:15px;font-weight:bold;z-index:1000;box-shadow:0 6px 20px rgba(139,0,0,.2);
   animation:tipIn .4s ease both;white-space:nowrap;}
 @keyframes tipIn{from{transform:translateX(-50%) translateY(-10px);opacity:0;}to{transform:translateX(-50%) translateY(0);opacity:1;}}
-/* 视频播放器样式 */
-#videoPlayer{
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    max-width: 90vw;
-    max-height: 90vh;
-    z-index: 1001;
-    display: none;
-    border-radius: 12px;
-    box-shadow: 0 8px 40px rgba(0,0,0,.35);
-}
 /* 彩带 */
 .confetti{position:fixed;top:50%;left:50%;width:10px;height:14px;border-radius:2px;z-index:1002;
   pointer-events:none;animation:confFall ease-out forwards;}
@@ -107,39 +94,6 @@ body{width:100vw;height:100vh;overflow:hidden;
     <button class="btn-no" id="noBtn">不愿意</button>
   </div>
 </div>
-
-<!-- 第二轮选择弹窗 -->
-<div class="modal" id="secondModal" style="display: none;">
-  <h3>你看完了，我还有更好康的你康不康？</h3>
-  <div class="btn-group">
-    <button class="btn-no" onclick="option1()">行行行，我不打扰了，我走了哈</button>
-    <button class="btn-yes" onclick="option2()">我要康康这到底是怎么个事</button>
-  </div>
-</div>
-
-<!-- 第三轮选择弹窗 -->
-<div class="modal" id="thirdModal" style="display: none;">
-  <h3>你怎么还不走？</h3>
-  <div class="btn-group">
-    <button class="btn-no" onclick="optionA()">行，我真走了</button>
-    <button class="btn-yes" onclick="optionB()">行，我不走了，我要康康这是怎么个事</button>
-  </div>
-</div>
-
-<!-- 彩蛋弹窗（视频结束后出现） -->
-<div class="modal" id="bonusModal" style="display: none;">
-  <h3>还没结束哦，这里还有彩蛋～</h3>
-  <div class="btn-group">
-    <button class="btn-yes" onclick="location.href='game.html'">玩个小游戏</button>
-    <button class="btn-yes" onclick="location.href='surprise.html'">领取终极惊喜</button>
-  </div>
-</div>
-
-<!-- 视频播放元素 -->
-<video id="videoPlayer" controls>
-  <source src="video.mp4" type="video/mp4">
-  您的浏览器不支持HTML5视频播放，请更换浏览器尝试。
-</video>
 
 <script>
 const COLORS = [
@@ -396,55 +350,8 @@ async function startAnimation() {
     fadeRemove(w);
     await sleep(20);
   }
-  // 弹幕全部消失后，显示第二轮选择
-  showSecondModal();
-}
-
-// 显示第二轮选择弹窗
-function showSecondModal() {
-  document.getElementById('secondModal').style.display = 'block';
-}
-
-// 第二轮选项1：选择离开，弹出第三轮
-function option1() {
-  document.getElementById('secondModal').style.display = 'none';
-  document.getElementById('thirdModal').style.display = 'block';
-}
-
-// 第二轮选项2：直接播放视频
-function option2() {
-  document.getElementById('secondModal').style.display = 'none';
-  playVideo();
-}
-
-// 第三轮选项A：确认离开
-function optionA() {
-  document.getElementById('thirdModal').style.display = 'none';
-  // 尝试关闭窗口，浏览器限制时弹出告别提示
-  try {
-    window.close();
-    setTimeout(() => {
-      alert('那下次再见啦～');
-    }, 500);
-  } catch(e) {
-    alert('那下次再见啦～');
-  }
-}
-
-// 第三轮选项B：留下看视频
-function optionB() {
-  document.getElementById('thirdModal').style.display = 'none';
-  playVideo();
-}
-
-// 播放视频函数
-function playVideo() {
-  const video = document.getElementById('videoPlayer');
-  video.style.display = 'block';
-  // 尝试自动播放，被浏览器阻止时需用户手动点击播放
-  video.play().catch(err => {
-    console.log('自动播放被浏览器限制，请手动点击播放按钮');
-  });
+  // 弹幕全部消失后，直接进入小游戏
+  window.location.href = 'game.html';
 }
 
 function sleep(ms) {
@@ -466,13 +373,6 @@ function spawnHearts() {
   }
 }
 spawnHearts();
-
-// 视频播放结束后：视频自动消失，开始后面的彩蛋环节
-document.getElementById('videoPlayer').addEventListener('ended', function(){
-  this.style.display = 'none';
-  burstConfetti();
-  document.getElementById('bonusModal').style.display = 'block';
-});
 
 // 禁止关闭页面提示
 window.onbeforeunload = function(e) {
