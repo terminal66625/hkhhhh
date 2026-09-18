@@ -104,7 +104,7 @@ body{width:100vw;height:100vh;overflow:hidden;
   <h3>你愿意做我的女朋友吗？</h3>
   <div class="btn-group">
     <button class="btn-yes" onclick="agree()">愿意</button>
-    <button class="btn-no" onclick="refuse()">不愿意</button>
+    <button class="btn-no" id="noBtn">不愿意</button>
   </div>
 </div>
 
@@ -279,7 +279,7 @@ function showTip(msg) {
 function escalateRefuse() {
   refuseCount++;
   const yesBtn = document.querySelector('#confess .btn-yes');
-  const noBtn = document.querySelector('#confess .btn-no');
+  const noBtn = document.getElementById('noBtn');
   if (yesBtn) yesBtn.style.transform = 'scale(' + (1 + Math.min(refuseCount,6)*0.15) + ')';
   if (noBtn) noBtn.style.transform = 'scale(' + Math.max(0.4, 1 - refuseCount*0.1) + ')';
   const modal = document.getElementById('confess');
@@ -294,43 +294,63 @@ function refuse() {
   hideWatermark();
   escalateRefuse();
 }
-// 不愿意按钮：鼠标一靠近就“逃走”，永远点不到，不与“愿意”重合，且只在弹窗附近活动
-document.querySelector('#confess .btn-no').addEventListener('mouseenter', function(e){
-  const noBtn = this;
+// 不愿意按钮：鼠标靠近 / 手机触摸都会“逃走”，永远点不到、不与“愿意”重合、且只在弹窗附近活动
+function dodgeNo(px, py) {
+  const noBtn = document.getElementById('noBtn');
   const yesBtn = document.querySelector('#confess .btn-yes');
   const modal = document.getElementById('confess');
+  if (!noBtn || !modal) return;
+
+  // 关键修复：把按钮移到 body 顶层，避免受弹窗 transform 影响而坐标跑偏或被弹窗盖住“消失”
+  if (noBtn.parentNode !== document.body) document.body.appendChild(noBtn);
+  noBtn.style.position = 'fixed';
+  noBtn.style.zIndex = '1000'; // 高于弹窗 999，保证始终可见
+
   const mr = modal.getBoundingClientRect();
-  const margin = 120; // 只允许在弹窗四周 120px 内活动
+  const margin = 80; // 只在弹窗四周 80px 内活动，不会跑太远
   const minX = mr.left - margin, maxX = mr.right + margin;
   const minY = mr.top - margin, maxY = mr.bottom + margin;
 
-  const mx = e.clientX, my = e.clientY;
   const yesRect = yesBtn.getBoundingClientRect();
   const halfW = noBtn.offsetWidth / 2;
   const halfH = noBtn.offsetHeight / 2;
 
-  // 反复尝试，直到找到一个：离鼠标够远、不压住“愿意”、且在视野内的位置
-  for (let attempt = 0; attempt < 60; attempt++) {
+  for (let i = 0; i < 100; i++) {
     let nx = Math.random() * (maxX - minX) + minX;
     let ny = Math.random() * (maxY - minY) + minY;
 
-    // 离鼠标太近就跳过（保证“逃走”，而不是待在原处）
-    if (Math.hypot(nx - mx, ny - my) < 80) continue;
-    // 不与“愿意”按钮重合
+    // 不压住“愿意”按钮
     if (nx + halfW > yesRect.left && nx - halfW < yesRect.right &&
         ny + halfH > yesRect.top && ny - halfH < yesRect.bottom) continue;
+    // 离手指/鼠标太近就跳过
+    if (px != null && Math.hypot(nx - px, ny - py) < 70) continue;
     // 夹回视野内
-    nx = Math.max(halfW + 10, Math.min(window.innerWidth - halfW - 10, nx));
-    ny = Math.max(halfH + 10, Math.min(window.innerHeight - halfH - 10, ny));
+    nx = Math.max(halfW, Math.min(window.innerWidth - halfW, nx));
+    ny = Math.max(halfH, Math.min(window.innerHeight - halfH, ny));
 
-    noBtn.style.position = 'fixed';
     noBtn.style.left = (nx - halfW) + 'px';
     noBtn.style.top = (ny - halfH) + 'px';
-    noBtn.style.zIndex = '998';
-    escalateRefuse();
-    return;
+    break;
   }
-});
+  escalateRefuse();
+}
+
+let lastDodge = 0;
+function onDodge(e) {
+  const now = Date.now();
+  if (now - lastDodge < 120) return; // 防止 touch 与 mouse 重复触发
+  lastDodge = now;
+  let px = null, py = null;
+  if (e && e.touches && e.touches.length) { px = e.touches[0].clientX; py = e.touches[0].clientY; }
+  else if (e && e.clientX != null) { px = e.clientX; py = e.clientY; }
+  dodgeNo(px, py);
+}
+
+const noBtnEl = document.getElementById('noBtn');
+noBtnEl.addEventListener('mouseenter', onDodge);
+noBtnEl.addEventListener('pointerdown', onDodge);
+noBtnEl.addEventListener('touchstart', function(e){ e.preventDefault(); onDodge(e); }, {passive: false});
+noBtnEl.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); onDodge(e); });
 // 愿意按钮：开始动画 + 音效 + 彩带
 function agree() {
   hideWatermark();
