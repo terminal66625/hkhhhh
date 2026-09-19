@@ -27,10 +27,15 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:"微软雅黑",sans-se
   font-size:14px;font-weight:bold;color:#fff;background:linear-gradient(135deg,#ff6b81,#ff8fa3);
   box-shadow:0 4px 14px rgba(255,107,129,.45);}
 .modal button.ghost{background:#f0f0f0;color:#666;box-shadow:none;}
+.intro{position:fixed;top:0;left:0;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;
+  z-index:1000;background:rgba(255,255,255,.65);color:#ff6b81;font-size:32px;font-weight:bold;
+  letter-spacing:2px;font-family:"楷体","KaiTi","华文楷体","STKaiti",serif;pointer-events:none;transition:opacity .4s;}
 </style>
 </head>
 <body>
-<div class="hud"><span>得分 <span id="score">0</span></span><span>时间 <span id="time">30</span>s</span></div>
+<div class="hud"><span>得分 <span id="score">0</span></span><span>时间 <span id="time">15</span>s</span></div>
+
+<div class="intro" id="intro">要有情感地接住爱心哦～</div>
 
 <div class="modal" id="result" style="display:none;">
   <h2 id="rating">太棒啦！</h2>
@@ -41,7 +46,7 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:"微软雅黑",sans-se
 </div>
 
 <script>
-var score = 0, timeLeft = 30, gameOver = false;
+var score = 0, timeLeft = 15, gameOver = false;
 var scoreEl = document.getElementById('score');
 var timeEl = document.getElementById('time');
 
@@ -62,7 +67,7 @@ function spawn() {
   h.className = 'fall-heart';
   h.textContent = '♥';
   h.style.left = (Math.random() * (window.innerWidth - 40)) + 'px';
-  h.style.fontSize = (20 + Math.random() * 30) + 'px';
+  h.style.fontSize = (45 + Math.random() * 40) + 'px';
   var dur = 2.5 + Math.random() * 2.5;
   h.style.animationDuration = dur + 's';
   h.addEventListener('click', function(ev) { ev.stopPropagation(); catchHeart(h); });
@@ -113,8 +118,18 @@ function end() {
 
 function restart() { location.reload(); }
 
-spawn();
-setInterval(tick, 1000);
+// 游戏开始前显示说明，1 秒后自动消失
+var intro = document.getElementById('intro');
+setTimeout(function(){
+  intro.style.opacity = '0';
+  setTimeout(function(){ intro.remove(); }, 400);
+}, 1000);
+
+// 延迟 1 秒再开始游戏
+setTimeout(function(){
+  spawn();
+  setInterval(tick, 1000);
+}, 1000);
 </script>
 </body>
 </html>
